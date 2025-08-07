@@ -25,20 +25,51 @@ interface BalanceData {
   items: TokenBalance[];
 }
 
+interface TransactionData {
+  address?: string;
+  updated_at?: string;
+  chain_id?: number;
+  chain_name?: string;
+  items?: Array<{
+    total_count: number;
+    latest_transaction?: {
+      block_signed_at: string;
+      tx_hash: string;
+      tx_detail_link: string;
+    };
+    earliest_transaction?: {
+      block_signed_at: string;
+      tx_hash: string;
+      tx_detail_link: string;
+    };
+    gas_summary?: {
+      total_sent_count: number;
+      total_fees_paid: string;
+      total_gas_quote: number;
+      pretty_total_gas_quote: string;
+      average_gas_quote_per_tx: number;
+      pretty_average_gas_quote_per_tx: string;
+    };
+  }>;
+  // Add any other fields that might be present
+  [key: string]: any;
+}
+
 interface BalanceCardProps {
   address: string;
-  data: BalanceData;
+  balanceData: BalanceData;
+  transactionData?: TransactionData | null;
   onRemove: (address: string) => void;
 }
 
-export default function BalanceCard({ address, data, onRemove }: BalanceCardProps) {
+export default function BalanceCard({ address, balanceData, transactionData, onRemove }: BalanceCardProps) {
   const portfolioValue = useMemo(() => {
-    return data.items.reduce((total, token) => total + (token.quote || 0), 0);
-  }, [data.items]);
+    return balanceData.items.reduce((total, token) => total + (token.quote || 0), 0);
+  }, [balanceData.items]);
 
   const sortedTokens = useMemo(() => {
-    return [...data.items].sort((a, b) => (b.quote || 0) - (a.quote || 0));
-  }, [data.items]);
+    return [...balanceData.items].sort((a, b) => (b.quote || 0) - (a.quote || 0));
+  }, [balanceData.items]);
 
   const formatBalance = (balance: string, decimals: number): string => {
     const balanceNum = parseFloat(balance) / Math.pow(10, decimals);
@@ -94,6 +125,52 @@ export default function BalanceCard({ address, data, onRemove }: BalanceCardProp
           {formatUSD(portfolioValue)}
         </p>
         <p className="text-gray-400 text-sm">Portfolio Value</p>
+      </div>
+
+      {/* Transaction Summary */}
+      <div className="mb-6 p-4 bg-gray-900/20 rounded-lg border border-gray-800/30">
+        <h4 className="text-white font-medium mb-3 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Transaction Summary
+        </h4>
+        
+        {transactionData?.items && transactionData.items.length > 0 ? (
+          <>
+            <div className="flex justify-center">
+              <div className="text-center p-4 bg-gray-800/30 rounded-lg min-w-[140px]">
+                <p className="text-white font-semibold text-xl">
+                  {transactionData.items[0].total_count.toLocaleString()}
+                </p>
+                <p className="text-gray-400 text-sm">Total Transactions</p>
+              </div>
+            </div>
+
+            {transactionData.items[0].earliest_transaction && transactionData.items[0].latest_transaction && (
+              <div className="mt-3 pt-3 border-t border-gray-800/50">
+                <div className="flex justify-between text-xs">
+                  <div>
+                    <p className="text-gray-400">First Transaction</p>
+                    <p className="text-white">
+                      {new Date(transactionData.items[0].earliest_transaction.block_signed_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-gray-400">Latest Transaction</p>
+                    <p className="text-white">
+                      {new Date(transactionData.items[0].latest_transaction.block_signed_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-gray-400 text-sm">Transaction data not available</p>
+          </div>
+        )}
       </div>
 
       {/* Tokens List */}
@@ -168,9 +245,16 @@ export default function BalanceCard({ address, data, onRemove }: BalanceCardProp
 
       {/* Footer */}
       <div className="mt-4 pt-4 border-t border-gray-800">
-        <p className="text-gray-400 text-xs">
-          Last updated: {new Date(data.updated_at).toLocaleString()}
-        </p>
+        <div className="flex justify-between items-center text-xs text-gray-400">
+          <span>
+            Balances: {new Date(balanceData.updated_at).toLocaleString()}
+          </span>
+          {transactionData?.updated_at && (
+            <span>
+              Transactions: {new Date(transactionData.updated_at).toLocaleString()}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

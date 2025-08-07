@@ -6,7 +6,8 @@ import BalanceCard from './BalanceCard';
 
 interface WalletData {
   address: string;
-  data: any;
+  balanceData: any;
+  transactionData: any;
   loading: boolean;
   error?: string;
 }
@@ -16,14 +17,28 @@ export default function WalletDashboard() {
 
   const fetchWalletData = useCallback(async (address: string) => {
     try {
-      const response = await fetch(`/api/wallet/balances?address=${encodeURIComponent(address)}`);
-      const result = await response.json();
+      // Fetch both balance and transaction data in parallel
+      const [balanceResponse, transactionResponse] = await Promise.all([
+        fetch(`/api/wallet/balances?address=${encodeURIComponent(address)}`),
+        fetch(`/api/wallet/transactions?address=${encodeURIComponent(address)}`)
+      ]);
 
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to fetch wallet data');
+      const balanceResult = await balanceResponse.json();
+      const transactionResult = await transactionResponse.json();
+
+      if (!balanceResult.success) {
+        throw new Error(balanceResult.error || 'Failed to fetch balance data');
       }
 
-      return result.data;
+      if (!transactionResult.success) {
+        console.warn('Failed to fetch transaction data:', transactionResult.error);
+        // Don't throw error for transaction data, just log warning
+      }
+
+      return {
+        balanceData: balanceResult.data,
+        transactionData: transactionResult.success ? transactionResult.data : null
+      };
     } catch (error) {
       console.error('Error fetching wallet data:', error);
       throw error;
@@ -40,7 +55,8 @@ export default function WalletDashboard() {
     // Add wallet with loading state
     const newWallet: WalletData = {
       address,
-      data: null,
+      balanceData: null,
+      transactionData: null,
       loading: true
     };
 
@@ -52,7 +68,12 @@ export default function WalletDashboard() {
       setWallets(prev =>
         prev.map(wallet =>
           wallet.address === address
-            ? { ...wallet, data, loading: false }
+            ? { 
+                ...wallet, 
+                balanceData: data.balanceData,
+                transactionData: data.transactionData,
+                loading: false 
+              }
             : wallet
         )
       );
@@ -90,7 +111,12 @@ export default function WalletDashboard() {
       setWallets(prev =>
         prev.map(wallet =>
           wallet.address === address
-            ? { ...wallet, data, loading: false }
+            ? { 
+                ...wallet, 
+                balanceData: data.balanceData,
+                transactionData: data.transactionData,
+                loading: false 
+              }
             : wallet
         )
       );
@@ -191,10 +217,11 @@ export default function WalletDashboard() {
                     <p className="text-gray-400 text-sm">{wallet.error}</p>
                   </div>
                 </div>
-              ) : wallet.data ? (
+              ) : wallet.balanceData ? (
                 <BalanceCard
                   address={wallet.address}
-                  data={wallet.data}
+                  balanceData={wallet.balanceData}
+                  transactionData={wallet.transactionData}
                   onRemove={removeWallet}
                 />
               ) : null}
