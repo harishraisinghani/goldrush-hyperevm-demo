@@ -71,29 +71,29 @@ The result should be a clean, working app where I can add HyperEVM wallet addres
 ```
 Add transaction summary functionality to each wallet card using the GoldRush TransactionService API with the following requirements:
 
-**API Integration**
+API Integration:
 - Create `/api/wallet/transactions` route using `client.TransactionService.getTransactionSummary()`
 - Target HyperEVM mainnet with `ChainName.HYPEREVM_MAINNET`
 - Handle BigInt serialization with existing `sanitizeData()` function
 
-**Data Fetching**
+Data Fetching:
 - Update `WalletDashboard` to fetch balance and transaction data in parallel using `Promise.all()`
 - Make transaction data optional - don't fail wallet loading if transactions fail
 - Pass both `balanceData` and `transactionData` to `BalanceCard` component
 
-**UI Display**
+UI Display:
 - Add "Transaction Summary" section between portfolio value and token list
 - Display total transaction count (formatted with commas)
 - Show transaction timeline: first and latest transaction dates
 - Handle nested API response structure: `data.items[0].total_count` and `data.items[0].earliest_transaction.block_signed_at`
 - Use centered, prominent layout for transaction count
 
-**Error Handling**
+Error Handling:
 - Add proper null checks for nested transaction data
 - Graceful fallbacks when transaction data unavailable
 - Update TypeScript interfaces to match actual API response structure
 
-**Expected Result**
+Expected Result:
 Each wallet card shows portfolio value, transaction count with timeline, and scrollable token list in a responsive grid layout (1/2/3 cards per row based on screen size).
 ```
 
