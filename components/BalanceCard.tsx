@@ -8,7 +8,9 @@ interface TokenBalance {
   contract_ticker_symbol: string;
   contract_address: string;
   supports_erc?: string[];
-  logo_url: string;
+  logo_urls?: {
+    token_logo_url?: string;
+  };
   balance: string;
   quote: number;
   quote_24h?: number;
@@ -193,9 +195,9 @@ export default function BalanceCard({ address, balanceData, transactionData, onR
                 >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
-                      {token.logo_url ? (
+                      {token.logo_urls?.token_logo_url ? (
                         <img
-                          src={token.logo_url}
+                          src={token.logo_urls.token_logo_url}
                           alt={token.contract_ticker_symbol}
                           className="w-full h-full object-cover"
                           onError={(e) => {
